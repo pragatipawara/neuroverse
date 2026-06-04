@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Inside The Human Mind</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--blue:#4f8ef7;--purple:#9b59f7;--gold:#f7c948;--red:#f74848;--teal:#48f7e4;}
+  html{scroll-behavior:smooth;}
+  body{background:#000;color:#fff;font-family:'Inter',sans-serif;overflow-x:hidden;}
+  canvas{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+  #main-canvas{pointer-events:all;}
+  section{position:relative;z-index:2;}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);}
+  .logo{font-size:.85rem;letter-spacing:.3em;text-transform:uppercase;color:#aaa;}
+  .nav-links{display:flex;gap:32px;}
+  .nav-links a{color:#aaa;text-decoration:none;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;transition:.3s;}
+  .nav-links a:hover{color:#fff;}
+
+  /* HERO */
+  #hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .hero-badge{font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--blue);margin-bottom:20px;opacity:.8;}
+  .hero-title{font-size:clamp(2.5rem,7vw,6.5rem);font-weight:900;text-align:center;line-height:1;letter-spacing:-.02em;background:linear-gradient(160deg,#fff 30%,rgba(150,180,255,.6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero-sub{font-size:clamp(.9rem,1.5vw,1.15rem);color:rgba(255,255,255,.45);text-align:center;max-width:520px;line-height:1.7;margin-top:20px;font-weight:300;}
+  .hero-cta{margin-top:44px;padding:16px 44px;border-radius:50px;background:linear-gradient(135deg,#1a0533,#6b21c8,#2563eb);border:1px solid rgba(150,100,255,.4);color:#fff;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:.3s;box-shadow:0 0 40px rgba(107,33,200,.5);}
+  .hero-cta:hover{transform:scale(1.05);box-shadow:0 0 60px rgba(107,33,200,.8);}
+  .scroll-hint{position:absolute;bottom:36px;display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.3);font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;}
+  .scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.4));animation:scrollLine 1.8s ease-in-out infinite;}
+  @keyframes scrollLine{0%,100%{opacity:.2;transform:scaleY(.5);}50%{opacity:1;transform:scaleY(1);}}
+
+  /* GLASS PANEL */
+  .glass{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(20px);border-radius:32px;}
+
+  /* SECTIONS */
+  .story-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 40px;position:relative;}
+  .section-inner{max-width:1100px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+  .section-inner.reverse{direction:rtl;}
+  .section-inner.reverse>*{direction:ltr;}
+  .section-label{font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;margin-bottom:16px;opacity:.5;}
+  .section-title{font-size:clamp(2rem,4.5vw,3.8rem);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin-bottom:20px;}
+  .section-desc{font-size:clamp(.9rem,1.3vw,1.05rem);color:rgba(255,255,255,.45);line-height:1.8;font-weight:300;}
+  .viz-box{width:100%;aspect-ratio:1;position:relative;display:flex;align-items:center;justify-content:center;}
+
+  /* THOUGHTS VIZ */
+  .thought-canvas-wrap{width:100%;height:380px;position:relative;}
+  .thought-canvas-wrap canvas{border-radius:24px;}
+
+  /* EMOTION SPHERES */
+  .emotion-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;}
+  .emo-card{padding:24px;border-radius:20px;cursor:pointer;transition:.4s;position:relative;overflow:hidden;}
+  .emo-card::before{content:'';position:absolute;inset:0;opacity:0;transition:.4s;border-radius:20px;}
+  .emo-card:hover{transform:scale(1.04);}
+  .emo-card:hover::before{opacity:.15;}
+  .emo-happy{background:rgba(247,201,72,.06);border:1px solid rgba(247,201,72,.2);}
+  .emo-happy::before{background:var(--gold);}
+  .emo-conf{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);}
+  .emo-conf::before{background:var(--blue);}
+  .emo-fear{background:rgba(247,72,72,.06);border:1px solid rgba(247,72,72,.2);}
+  .emo-fear::before{background:var(--red);}
+  .emo-cur{background:rgba(155,89,247,.06);border:1px solid rgba(155,89,247,.2);}
+  .emo-cur::before{background:var(--purple);}
+  .emo-dot{width:40px;height:40px;border-radius:50%;margin-bottom:12px;filter:blur(2px);}
+  .emo-name{font-size:.8rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+  .emo-info{font-size:.75rem;color:rgba(255,255,255,.4);line-height:1.5;display:none;}
+  .emo-card:hover .emo-info{display:block;}
+
+  /* HABIT NETWORK */
+  .habit-canvas-wrap{width:100%;height:380px;}
+
+  /* MEMORY CUBES */
+  .memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;}
+  .mem-cube{aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.4s;position:relative;overflow:hidden;}
+  .mem-cube::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.05),transparent);border-radius:16px;}
+  .mem-cube:hover{transform:translateY(-6px) scale(1.05);}
+  .mem-icon{font-size:1.6rem;}
+  .mem-label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+
+  /* FUTURE */
+  .future-canvas-wrap{width:100%;height:420px;}
+
+  /* FINAL */
+  #final{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px;position:relative;}
+  .final-quote{font-size:clamp(1.8rem,4.5vw,4rem);font-weight:800;max-width:800px;line-height:1.15;letter-spacing:-.02em;background:linear-gradient(160deg,#fff,rgba(150,180,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:48px;}
+  .final-btn{padding:18px 52px;border-radius:50px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#fff;font-size:.8rem;letter-spacing:.3em;text-transform:uppercase;cursor:pointer;transition:.3s;}
+  .final-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3);}
+
+  /* PROGRESS */
+  .progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(to right,var(--purple),var(--blue));z-index:200;transition:width .1s;}
+
+  /* GRADIENT ACCENTS */
+  .glow-blue{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(79,142,247,.15),transparent 70%);pointer-events:none;}
+  .glow-purple{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(155,89,247,.15),transparent 70%);pointer-events:none;}
+
+  @media(max-width:768px){
+    .section-inner{grid-template-columns:1fr;gap:40px;}
+    .section-inner.reverse{direction:ltr;}
+    nav{padding:16px 20px;}
+    .nav-links{display:none;}
+    .story-section{padding:60px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<canvas id="main-canvas"></canvas>
+
+<nav>
+  <div class="logo">Neuroverse</div>
+  <div class="nav-links">
+    <a href="#thoughts">Thoughts</a>
+    <a href="#emotions">Emotions</a>
+    <a href="#habits">Habits</a>
+    <a href="#memories">Memories</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="glow-blue" style="width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <div class="hero-badge">Neuroverse — An Immersive Experience</div>
+  <h1 class="hero-title">Inside The<br>Human Mind</h1>
+  <p class="hero-sub">Explore thoughts, emotions, habits, and memories through an immersive 3D experience.</p>
+  <button class="hero-cta" onclick="document.getElementById('thoughts').scrollIntoView({behavior:'smooth'})">Begin The Journey</button>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- THOUGHTS -->
+<section class="story-section" id="thoughts">
+  <div class="glow-purple" style="width:500px;height:500px;top:50%;right:-100px;transform:translateY(-50%);"></div>
+  <div class="section-inner">
+    <div>
+      <div class="section-label">Section 01 — Thoughts</div>
+      <h2 class="section-title" style="background:linear-gradient(135deg,#fff,rgba(79,142,247,.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Every Thought<br>Creates A Path</h2>
+      <p class="section-desc">The human brain generates over 70,000 thoughts each day. Every repeated thought strengthens a neural pathway — carving rivers through the landscape of the mind.</p>
+    </div>
+    <div class="thought-canvas-wrap glass">
+      <canvas id="thought-canvas" width="500" height="380"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- EMOTIONS -->
+<section class="story-section" id="emotions">
+  <div class="glow-blue" style="width:500px;height:500px;top:50%;left:-100px;transform:translateY(-50%);"></div>
+  <div class="section-inner reverse">
+    <div>
+      <div class="section-label">Section 02 — Emotions</div>
+      <h2 class="section-title" style="background:linear-gradient(135deg,#fff,rgba(247,201,72,.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Emotions Shape<br>Every Decision</h2>
+      <p class="section-desc">Emotions are not obstacles — they are data. Each feeling carries a biochemical signature that colors perception and steers every choice we make.</p>
+    </div>
+    <div class="viz-box">
+      <div class="emotion-grid">
+        <div class="emo-card emo-happy">
+          <div class="emo-dot" style="background:radial-gradient(circle,#f7c948,#f7c948aa);box-shadow:0 0 20px #f7c948;"></div>
+          <div class="emo-name" style="color:#f7c948;">Happiness</div>
+          <div class="emo-info">Activates the reward circuits and releases dopamine — the molecule of motivation.</div>
+        </div>
+        <div class="emo-card emo-conf">
+          <div class="emo-dot" style="background:radial-gradient(circle,#4f8ef7,#4f8ef7aa);box-shadow:0 0 20px #4f8ef7;"></div>
+          <div class="emo-name" style="color:#4f8ef7;">Confidence</div>
+          <div class="emo-info">Strengthens the prefrontal cortex, enabling clearer thinking and decisive action.</div>
+        </div>
+        <div class="emo-card emo-fear">
+          <div class="emo-dot" style="background:radial-gradient(circle,#f74848,#f74848aa);box-shadow:0 0 20px #f74848;"></div>
+          <div class="emo-name" style="color:#f74848;">Fear</div>
+          <div class="emo-info">Triggers the amygdala — a survival signal refined over 500 million years of evolution.</div>
+        </div>
+        <div class="emo-card emo-cur">
+          <div class="emo-dot" style="background:radial-gradient(circle,#9b59f7,#9b59f7aa);box-shadow:0 0 20px #9b59f7;"></div>
+          <div class="emo-name" style="color:#9b59f7;">Curiosity</div>
+          <div class="emo-info">Floods the brain with norepinephrine — the fuel of exploration and discovery.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HABITS -->
+<section class="story-section" id="habits">
+  <div class="glow-purple" style="width:600px;height:600px;top:50%;right:-150px;transform:translateY(-50%);"></div>
+  <div class="section-inner">
+    <div>
+      <div class="section-label">Section 03 — Habits</div>
+      <h2 class="section-title" style="background:linear-gradient(135deg,#fff,rgba(72,247,228,.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Habits Are<br>Neural Loops</h2>
+      <p class="section-desc">Every habit begins as a deliberate choice and becomes an automatic pathway through repetition. The basal ganglia rewires itself — behavior becomes identity.</p>
+    </div>
+    <div class="habit-canvas-wrap glass">
+      <canvas id="habit-canvas" width="500" height="380"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- MEMORIES -->
+<section class="story-section" id="memories">
+  <div class="glow-blue" style="width:500px;height:500px;top:50%;left:-100px;transform:translateY(-50%);"></div>
+  <div class="section-inner reverse">
+    <div>
+      <div class="section-label">Section 04 — Memories</div>
+      <h2 class="section-title" style="background:linear-gradient(135deg,#fff,rgba(155,89,247,.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Memories<br>Build Identity</h2>
+      <p class="section-desc">Memory is not a recording — it is a reconstruction. Each recall reshapes the original, weaving the story of who you are from fragments of light and time.</p>
+    </div>
+    <div class="viz-box">
+      <div class="memory-grid">
+        <div class="mem-cube glass" style="border-color:rgba(155,89,247,.3);">
+          <div class="mem-icon">🧠</div><div class="mem-label">Neural</div>
+        </div>
+        <div class="mem-cube glass" style="border-color:rgba(79,142,247,.3);">
+          <div class="mem-icon">💭</div><div class="mem-label">Dream</div>
+        </div>
+        <div class="mem-cube glass" style="border-color:rgba(247,201,72,.3);">
+          <div class="mem-icon">⚡</div><div class="mem-label">Flash</div>
+        </div>
+        <div class="mem-cube glass" style="border-color:rgba(72,247,228,.3);">
+          <div class="mem-icon">🌊</div><div class="mem-label">Emotion</div>
+        </div>
+        <div class="mem-cube glass" style="border-color:rgba(247,72,72,.3);">
+          <div class="mem-icon">🔮</div><div class="mem-label">Vision</div>
+        </div>
+        <div class="mem-cube glass" style="border-color:rgba(155,89,247,.3);">
+          <div class="mem-icon">✨</div><div class="mem-label">Spark</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+<section class="story-section" id="future">
+  <div class="glow-blue" style="width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <div class="section-inner">
+    <div>
+      <div class="section-label">Section 05 — Future</div>
+      <h2 class="section-title" style="background:linear-gradient(135deg,#fff,rgba(79,142,247,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">The Future Of<br>Human Mind</h2>
+      <p class="section-desc">Technology and psychology together will unlock deeper insight into human potential. The boundary between biological and digital intelligence dissolves at the frontier.</p>
+    </div>
+    <div class="future-canvas-wrap glass">
+      <canvas id="future-canvas" width="500" height="420"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section id="final">
+  <div class="glow-purple" style="width:800px;height:800px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <p class="final-quote">"The Mind Is The Most Powerful Technology Ever Created."</p>
+  <button class="final-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Explore More</button>
+</section>
+
+<script>
+// ===== PROGRESS BAR =====
+window.addEventListener('scroll',()=>{
+  const p=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;
+  document.getElementById('progress').style.width=p+'%';
+});
+
+// ===== MAIN BRAIN CANVAS =====
+const mainCanvas=document.getElementById('main-canvas');
+const mCtx=mainCanvas.getContext('2d');
+let W,H,mouse={x:0,y:0};
+
+function resizeMain(){
+  W=mainCanvas.width=window.innerWidth;
+  H=mainCanvas.height=window.innerHeight;
+}
+resizeMain();
+window.addEventListener('resize',resizeMain);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+
+// Particles
+const PARTICLE_COUNT=180;
+const particles=[];
+for(let i=0;i<PARTICLE_COUNT;i++){
+  particles.push({
+    x:Math.random()*2000,y:Math.random()*1200,
+    vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+    r:Math.random()*1.5+.5,
+    color:`hsl(${220+Math.random()*60},80%,${50+Math.random()*30}%)`,
+    alpha:Math.random()*.5+.1
+  });
+}
+
+// Brain nodes (simplified)
+const brainNodes=[];
+const NODE_COUNT=80;
+for(let i=0;i<NODE_COUNT;i++){
+  const angle=Math.random()*Math.PI*2;
+  const r=Math.random()*120+30;
+  brainNodes.push({
+    cx:Math.cos(angle)*r,cy:Math.sin(angle)*r*.65,
+    angle,speed:(Math.random()-.5)*.004+.003,
+    r,size:Math.random()*2+.8,
+    alpha:Math.random()*.7+.3,
+    pulse:Math.random()*Math.PI*2
+  });
+}
+
+let t=0;
+function drawMain(){
+  mCtx.clearRect(0,0,W,H);
+  t+=.012;
+
+  const heroH=window.innerHeight;
+  const scrollPct=Math.min(window.scrollY/heroH,1);
+
+  // Particles
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    mCtx.beginPath();
+    mCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    mCtx.fillStyle=p.color;
+    mCtx.globalAlpha=p.alpha*(1-scrollPct*.7);
+    mCtx.fill();
+  });
+  mCtx.globalAlpha=1;
+
+  // Brain in hero
+  const cx=W/2+(mouse.x-W/2)*.015;
+  const cy=H/2+(mouse.y-H/2)*.015;
+  const brainAlpha=Math.max(0,1-scrollPct*1.5);
+
+  if(brainAlpha>0){
+    // Draw connections
+    for(let i=0;i<NODE_COUNT;i++){
+      const a=brainNodes[i];
+      a.angle+=a.speed;
+      a.pulse+=.05;
+      const nx=cx+Math.cos(a.angle)*a.r;
+      const ny=cy+Math.sin(a.angle)*a.r*.65;
+      for(let j=i+1;j<NODE_COUNT;j++){
+        const b=brainNodes[j];
+        const bx=cx+Math.cos(b.angle)*b.r;
+        const by=cy+Math.sin(b.angle)*b.r*.65;
+        const dist=Math.hypot(nx-bx,ny-by);
+        if(dist<90){
+          const g=mCtx.createLinearGradient(nx,ny,bx,by);
+          g.addColorStop(0,`rgba(79,142,247,${(1-dist/90)*.3*brainAlpha})`);
+          g.addColorStop(1,`rgba(155,89,247,${(1-dist/90)*.3*brainAlpha})`);
+          mCtx.beginPath();
+          mCtx.moveTo(nx,ny); mCtx.lineTo(bx,by);
+          mCtx.strokeStyle=g; mCtx.lineWidth=.7; mCtx.stroke();
+        }
+      }
+    }
+    // Draw nodes
+    brainNodes.forEach((n,i)=>{
+      const nx=cx+Math.cos(n.angle)*n.r;
+      const ny=cy+Math.sin(n.angle)*n.r*.65;
+      const pulse=Math.sin(n.pulse)*.5+.5;
+      mCtx.beginPath();
+      mCtx.arc(nx,ny,n.size*(1+pulse*.4),0,Math.PI*2);
+      mCtx.fillStyle=i%3===0?`rgba(155,89,247,${n.alpha*brainAlpha})`:`rgba(79,142,247,${n.alpha*brainAlpha})`;
+      mCtx.fill();
+      // Glow
+      mCtx.beginPath();
+      mCtx.arc(nx,ny,n.size*3,0,Math.PI*2);
+      mCtx.fillStyle=i%3===0?`rgba(155,89,247,${.04*brainAlpha})`:`rgba(79,142,247,${.04*brainAlpha})`;
+      mCtx.fill();
+    });
+
+    // Center brain glow
+    const grad=mCtx.createRadialGradient(cx,cy,10,cx,cy,180);
+    grad.addColorStop(0,`rgba(100,80,255,${.08*brainAlpha})`);
+    grad.addColorStop(1,'transparent');
+    mCtx.beginPath(); mCtx.arc(cx,cy,180,0,Math.PI*2);
+    mCtx.fillStyle=grad; mCtx.fill();
+  }
+
+  requestAnimationFrame(drawMain);
+}
+drawMain();
+
+// ===== THOUGHT CANVAS =====
+const tCanvas=document.getElementById('thought-canvas');
+const tCtx=tCanvas.getContext('2d');
+tCanvas.width=500; tCanvas.height=380;
+
+const thoughtParticles=[];
+for(let i=0;i<60;i++){
+  thoughtParticles.push({
+    x:Math.random()*500,y:Math.random()*380,
+    vx:(Math.random()-.5)*1.2,vy:(Math.random()-.5)*1.2,
+    r:Math.random()*2.5+.5,
+    color:`hsl(${200+Math.random()*60},90%,65%)`,
+    life:Math.random()*100,maxLife:100+Math.random()*100,
+    trail:[]
+  });
+}
+
+let tT=0;
+function drawThoughts(){
+  tCtx.fillStyle='rgba(10,10,20,.15)';
+  tCtx.fillRect(0,0,500,380);
+  tT+=.02;
+
+  thoughtParticles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    p.vx+=(Math.random()-.5)*.15;
+    p.vy+=(Math.random()-.5)*.15;
+    p.vx=Math.max(-2,Math.min(2,p.vx));
+    p.vy=Math.max(-2,Math.min(2,p.vy));
+    if(p.x<0||p.x>500)p.vx*=-1;
+    if(p.y<0||p.y>380)p.vy*=-1;
+    p.life++;
+    if(p.life>p.maxLife){p.x=Math.random()*500;p.y=Math.random()*380;p.life=0;p.trail=[];}
+    p.trail.push({x:p.x,y:p.y});
+    if(p.trail.length>12)p.trail.shift();
+
+    // Draw trail
+    for(let i=1;i<p.trail.length;i++){
+      tCtx.beginPath();
+      tCtx.moveTo(p.trail[i-1].x,p.trail[i-1].y);
+      tCtx.lineTo(p.trail[i].x,p.trail[i].y);
+      tCtx.strokeStyle=p.color.replace(')',`,${i/p.trail.length*.5})`).replace('hsl','hsla');
+      tCtx.lineWidth=p.r*.7;
+      tCtx.stroke();
+    }
+
+    tCtx.beginPath(); tCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    tCtx.fillStyle=p.color; tCtx.fill();
+
+    // Glow
+    tCtx.beginPath(); tCtx.arc(p.x,p.y,p.r*3,0,Math.PI*2);
+    tCtx.fillStyle=p.color.replace('hsl','hsla').replace(')',`,.04)`);
+    tCtx.fill();
+  });
+
+  // Connect close particles
+  for(let i=0;i<thoughtParticles.length;i++){
+    for(let j=i+1;j<thoughtParticles.length;j++){
+      const dx=thoughtParticles[i].x-thoughtParticles[j].x;
+      const dy=thoughtParticles[i].y-thoughtParticles[j].y;
+      const d=Math.hypot(dx,dy);
+      if(d<60){
+        tCtx.beginPath();
+        tCtx.moveTo(thoughtParticles[i].x,thoughtParticles[i].y);
+        tCtx.lineTo(thoughtParticles[j].x,thoughtParticles[j].y);
+        tCtx.strokeStyle=`rgba(79,142,247,${(1-d/60)*.2})`;
+        tCtx.lineWidth=.5; tCtx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawThoughts);
+}
+drawThoughts();
+
+// ===== HABIT CANVAS =====
+const hCanvas=document.getElementById('habit-canvas');
+const hCtx=hCanvas.getContext('2d');
+hCanvas.width=500; hCanvas.height=380;
+
+const habNodes=[];
+for(let i=0;i<16;i++){
+  habNodes.push({
+    x:60+Math.random()*380,y:40+Math.random()*300,
+    r:4+Math.random()*4,
+    connections:[],
+    strength:0,
+    pulse:Math.random()*Math.PI*2
+  });
+}
+habNodes.forEach((n,i)=>{
+  const targets=[...habNodes].sort(()=>Math.random()-.5).slice(0,3);
+  n.connections=targets.filter(t=>t!==n).slice(0,2);
+});
+
+const signals=[];
+for(let i=0;i<20;i++){
+  const src=habNodes[Math.floor(Math.random()*habNodes.length)];
+  if(src.connections.length>0){
+    signals.push({
+      src,dst:src.connections[Math.floor(Math.random()*src.connections.length)],
+      t:Math.random(),speed:.005+Math.random()*.01
+    });
+  }
+}
+
+let hT=0;
+function drawHabits(){
+  hCtx.fillStyle='rgba(10,10,20,.2)';
+  hCtx.fillRect(0,0,500,380);
+  hT+=.02;
+
+  // Draw connections
+  habNodes.forEach(n=>{
+    n.connections.forEach(c=>{
+      const strength=Math.min(1,n.strength/20);
+      hCtx.beginPath(); hCtx.moveTo(n.x,n.y); hCtx.lineTo(c.x,c.y);
+      hCtx.strokeStyle=`rgba(72,247,228,${.1+strength*.4})`;
+      hCtx.lineWidth=.5+strength*2; hCtx.stroke();
+    });
+  });
+
+  // Draw signals
+  signals.forEach(s=>{
+    s.t+=s.speed;
+    if(s.t>1){
+      s.t=0;
+      s.src.strength=Math.min(30,s.src.strength+1);
+      const src=habNodes[Math.floor(Math.random()*habNodes.length)];
+      if(src.connections.length>0){
+        s.src=src;
+        s.dst=src.connections[Math.floor(Math.random()*src.connections.length)];
+      }
+    }
+    const x=s.src.x+(s.dst.x-s.src.x)*s.t;
+    const y=s.src.y+(s.dst.y-s.src.y)*s.t;
+    hCtx.beginPath(); hCtx.arc(x,y,3,0,Math.PI*2);
+    hCtx.fillStyle='rgba(72,247,228,.9)'; hCtx.fill();
+    hCtx.beginPath(); hCtx.arc(x,y,8,0,Math.PI*2);
+    hCtx.fillStyle='rgba(72,247,228,.1)'; hCtx.fill();
+  });
+
+  // Draw nodes
+  habNodes.forEach(n=>{
+    n.pulse+=.04;
+    const pulse=Math.sin(n.pulse)*.5+.5;
+    const strength=Math.min(1,n.strength/20);
+    hCtx.beginPath(); hCtx.arc(n.x,n.y,n.r*(1+pulse*.3),0,Math.PI*2);
+    const g=hCtx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*2);
+    g.addColorStop(0,`rgba(72,247,228,${.6+strength*.4})`);
+    g.addColorStop(1,'rgba(79,142,247,.1)');
+    hCtx.fillStyle=g; hCtx.fill();
+    // Outer glow
+    hCtx.beginPath(); hCtx.arc(n.x,n.y,n.r*4,0,Math.PI*2);
+    hCtx.fillStyle=`rgba(72,247,228,${.03+strength*.06})`; hCtx.fill();
+  });
+  requestAnimationFrame(drawHabits);
+}
+drawHabits();
+
+// ===== FUTURE CANVAS =====
+const fCanvas=document.getElementById('future-canvas');
+const fCtx=fCanvas.getContext('2d');
+fCanvas.width=500; fCanvas.height=420;
+
+const futureNodes=[];
+for(let i=0;i<100;i++){
+  futureNodes.push({
+    x:250+Math.cos(i*.628)*((i%10)*18+20),
+    y:210+Math.sin(i*.628)*((i%10)*12+15),
+    vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,
+    r:Math.random()*2+.5,
+    pulse:Math.random()*Math.PI*2,
+    color:i%3===0?'79,142,247':i%3===1?'155,89,247':'72,247,228'
+  });
+}
+
+let fuT=0;
+function drawFuture(){
+  fCtx.fillStyle='rgba(10,10,20,.12)';
+  fCtx.fillRect(0,0,500,420);
+  fuT+=.015;
+
+  futureNodes.forEach((n,i)=>{
+    n.x+=n.vx; n.y+=n.vy;
+    n.vx+=(250-n.x)*.0008; n.vy+=(210-n.y)*.0008;
+    n.vx+=(Math.random()-.5)*.1; n.vy+=(Math.random()-.5)*.1;
+    n.vx=Math.max(-2,Math.min(2,n.vx));
+    n.vy=Math.max(-2,Math.min(2,n.vy));
+    n.pulse+=.03;
+
+    for(let j=i+1;j<futureNodes.length;j++){
+      const m=futureNodes[j];
+      const d=Math.hypot(n.x-m.x,n.y-m.y);
+      if(d<70){
+        fCtx.beginPath(); fCtx.moveTo(n.x,n.y); fCtx.lineTo(m.x,m.y);
+        fCtx.strokeStyle=`rgba(79,142,247,${(1-d/70)*.25})`;
+        fCtx.lineWidth=.5; fCtx.stroke();
+      }
+    }
+
+    const pulse=Math.sin(n.pulse)*.5+.5;
+    fCtx.beginPath(); fCtx.arc(n.x,n.y,n.r*(1+pulse*.5),0,Math.PI*2);
+    fCtx.fillStyle=`rgba(${n.color},${.5+pulse*.5})`; fCtx.fill();
+    fCtx.beginPath(); fCtx.arc(n.x,n.y,n.r*4,0,Math.PI*2);
+    fCtx.fillStyle=`rgba(${n.color},.04)`; fCtx.fill();
+  });
+
+  // Energy waves
+  for(let r=0;r<3;r++){
+    const radius=(fuT*60+r*80)%300;
+    fCtx.beginPath(); fCtx.arc(250,210,radius,0,Math.PI*2);
+    fCtx.strokeStyle=`rgba(155,89,247,${Math.max(0,(1-radius/300)*.2)})`;
+    fCtx.lineWidth=1; fCtx.stroke();
+  }
+
+  requestAnimationFrame(drawFuture);
+}
+drawFuture();
+
+// ===== MEMORY CUBE ANIMATION =====
+const memCubes=document.querySelectorAll('.mem-cube');
+memCubes.forEach((c,i)=>{
+  c.style.animation=`memFloat ${2.5+i*.3}s ease-in-out ${i*.2}s infinite alternate`;
+});
+const memStyle=document.createElement('style');
+memStyle.textContent=`@keyframes memFloat{from{transform:translateY(0);}to{transform:translateY(-8px);}}`;
+document.head.appendChild(memStyle);
+
+// ===== INTERSECTION OBSERVER =====
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+    }
+  });
+},{threshold:.1});
+
+document.querySelectorAll('.story-section').forEach(s=>{
+  s.style.opacity='0';
+  s.style.transform='translateY(40px)';
+  s.style.transition='opacity .8s ease, transform .8s ease';
+  obs.observe(s);
+});
+document.querySelector('#final').style.opacity='0';
+document.querySelector('#final').style.transform='translateY(40px)';
+document.querySelector('#final').style.transition='opacity 1s ease, transform 1s ease';
+obs.observe(document.querySelector('#final'));
+</script>
+</body>
+</html>
